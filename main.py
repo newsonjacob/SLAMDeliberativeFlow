@@ -1,6 +1,7 @@
 """Example main script performing waypoint navigation using SLAM poses."""
 import time
 import math
+import os
 import yaml
 import airsim
 
@@ -23,10 +24,13 @@ def main() -> None:
     with open("config/goals.yaml", "r") as f:
         goals = yaml.safe_load(f)
 
+    flight_log = []
+
     for goal in goals:
         goal_pose = tuple(goal)
         while True:
             current_pose = get_current_pose()
+            flight_log.append((time.time(), *current_pose))
             if _reached_goal(current_pose, goal_pose):
                 break
             vx, vy, vz = compute_velocity_command(current_pose, goal_pose)
@@ -36,6 +40,12 @@ def main() -> None:
     client.landAsync().join()
     client.armDisarm(False)
     client.enableApiControl(False)
+
+    os.makedirs("logs", exist_ok=True)
+    with open("logs/flight_log.csv", "w") as f:
+        f.write("time,x,y,z,yaw\n")
+        for entry in flight_log:
+            f.write(",".join(f"{v:.3f}" for v in entry) + "\n")
 
 
 if __name__ == "__main__":
