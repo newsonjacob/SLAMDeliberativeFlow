@@ -6,8 +6,8 @@ import yaml
 import airsim
 
 from slam.slam_interface import get_current_pose
-from navigation.deliberative_nav import compute_velocity_command
-from uav.airsim_utils import connect_and_takeoff, send_velocity_command
+from navigation.deliberative_nav import compute_velocity_command, compute_yaw_command
+from uav.airsim_utils import connect_and_takeoff
 
 
 def _reached_goal(current: tuple, goal: tuple, threshold: float = 0.5) -> bool:
@@ -30,11 +30,25 @@ def main() -> None:
         goal_pose = tuple(goal)
         while True:
             current_pose = get_current_pose()
-            flight_log.append((time.time(), *current_pose))
+
+            yaw_error = math.atan2(goal_pose[1] - current_pose[1],
+                                   goal_pose[0] - current_pose[0]) - current_pose[3]
+            yaw_error = (yaw_error + math.pi) % (2 * math.pi) - math.pi
+
+            yaw_rate = compute_yaw_command(current_pose[3],
+                                           current_pose[:3],
+                                           goal_pose[:3])
+
+            flight_log.append((time.time(), *current_pose, yaw_error, yaw_rate))
+
             if _reached_goal(current_pose, goal_pose):
                 break
+
             vx, vy, vz = compute_velocity_command(current_pose, goal_pose)
-            send_velocity_command(client, vx, vy, vz, duration=1.0)
+
+            client.moveByVelocityAsync(vx, vy, vz, 1.0,
+                                       drivetrain=0,
+                                       yaw_mode=airsim.YawMode(is_rate=True, yaw_or_rate=yaw_rate))
             time.sleep(0.1)
 
     client.landAsync().join()
@@ -43,7 +57,7 @@ def main() -> None:
 
     os.makedirs("logs", exist_ok=True)
     with open("logs/flight_log.csv", "w") as f:
-        f.write("time,x,y,z,yaw\n")
+        f.write("time,x,y,z,yaw,yaw_error,yaw_rate\n")
         for entry in flight_log:
             f.write(",".join(f"{v:.3f}" for v in entry) + "\n")
 
