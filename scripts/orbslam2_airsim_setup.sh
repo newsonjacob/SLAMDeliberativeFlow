@@ -14,4 +14,12 @@ cd "$WS"
 catkin_make
 
 cat <<EOM
-\nSetup complete. Add the following to your environment:\n\nsource $WS/devel/setup.bash\n\nThen launch AirSim and run:\n\nrosrun slam_deliberative_flow airsim_image_publisher.py\nroslaunch orb_slam2_ros mono.launch camera_topic:=/airsim/image_raw\nEOM
+Setup complete. Add the following to your environment:
+
+source $WS/devel/setup.bash
+
+Then launch AirSim and run:
+
+rosrun slam_deliberative_flow airsim_image_publisher.py
+roslaunch orb_slam2_ros mono.launch camera_topic:=/airsim/image_raw
+EOM
