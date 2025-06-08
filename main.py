@@ -8,6 +8,7 @@ import airsim
 from slam.slam_interface import get_current_pose
 from navigation.deliberative_nav import compute_velocity_command, compute_yaw_command
 from uav.airsim_utils import connect_and_takeoff
+from uav.interface import start_gui, exit_flag
 
 
 def _reached_goal(current: tuple, goal: tuple, threshold: float = 1.0) -> bool:
@@ -18,6 +19,9 @@ def _reached_goal(current: tuple, goal: tuple, threshold: float = 1.0) -> bool:
 
 
 def main() -> None:
+    # launch simple GUI for stopping the simulation
+    start_gui()
+
     client = airsim.MultirotorClient()
     connect_and_takeoff(client, altitude=-2.0)
 
@@ -28,7 +32,7 @@ def main() -> None:
 
     for goal_index, goal in enumerate(goals):
         goal_pose = tuple(goal)
-        while True:
+        while not exit_flag[0]:
             current_pose = get_current_pose()
             assert len(current_pose) == 4 and isinstance(current_pose, tuple)
 
@@ -59,7 +63,13 @@ def main() -> None:
                                        yaw_mode=airsim.YawMode(is_rate=True, yaw_or_rate=yaw_rate))
             time.sleep(0.1)
 
-    print("All waypoints reached — landing.")
+        if exit_flag[0]:
+            break
+
+    if exit_flag[0]:
+        print("\U0001f6d1 Stop requested \u2014 landing.")
+    else:
+        print("All waypoints reached \u2014 landing.")
     client.landAsync().join()
     client.armDisarm(False)
     client.enableApiControl(False)
