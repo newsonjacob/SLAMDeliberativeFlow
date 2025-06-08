@@ -10,7 +10,7 @@ from navigation.deliberative_nav import compute_velocity_command, compute_yaw_co
 from uav.airsim_utils import connect_and_takeoff
 
 
-def _reached_goal(current: tuple, goal: tuple, threshold: float = 0.5) -> bool:
+def _reached_goal(current: tuple, goal: tuple, threshold: float = 1.0) -> bool:
     dx = goal[0] - current[0]
     dy = goal[1] - current[1]
     dz = goal[2] - current[2]
@@ -26,10 +26,17 @@ def main() -> None:
 
     flight_log = []
 
-    for goal in goals:
+    for goal_index, goal in enumerate(goals):
         goal_pose = tuple(goal)
         while True:
             current_pose = get_current_pose()
+            assert len(current_pose) == 4 and isinstance(current_pose, tuple)
+
+            dx = goal_pose[0] - current_pose[0]
+            dy = goal_pose[1] - current_pose[1]
+            dz = goal_pose[2] - current_pose[2]
+            dist = math.sqrt(dx * dx + dy * dy + dz * dz)
+            print(f"[{goal_index}] Distance to goal: {dist:.2f} | Current: {current_pose} | Goal: {goal_pose}")
 
             yaw_error = math.atan2(goal_pose[1] - current_pose[1],
                                    goal_pose[0] - current_pose[0]) - current_pose[3]
@@ -42,6 +49,7 @@ def main() -> None:
             flight_log.append((time.time(), *current_pose, yaw_error, yaw_rate))
 
             if _reached_goal(current_pose, goal_pose):
+                print(f"✅ Reached waypoint {goal_index}")
                 break
 
             vx, vy, vz = compute_velocity_command(current_pose, goal_pose)
@@ -51,6 +59,7 @@ def main() -> None:
                                        yaw_mode=airsim.YawMode(is_rate=True, yaw_or_rate=yaw_rate))
             time.sleep(0.1)
 
+    print("All waypoints reached — landing.")
     client.landAsync().join()
     client.armDisarm(False)
     client.enableApiControl(False)
