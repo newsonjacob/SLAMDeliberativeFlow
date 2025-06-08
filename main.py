@@ -83,9 +83,11 @@ def run_navigation() -> None:
             print(f"Commanded velocity: vx={vx:.2f}, vy={vy:.2f}, vz={vz:.2f}")
 
             try:
-                client.moveByVelocityAsync(vx, vy, vz, 1.0,
-                    drivetrain=0,
-                    yaw_mode=airsim.YawMode(is_rate=True, yaw_or_rate=yaw_rate)).join()
+                client.moveByVelocityAsync(
+                    vx, vy, vz, 1.0,
+                    drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom,
+                    yaw_mode=airsim.YawMode(is_rate=True, yaw_or_rate=yaw_rate)
+                ).join()
             except Exception as e:
                 print(f"⚠️ Velocity command failed: {e}")
                 break
