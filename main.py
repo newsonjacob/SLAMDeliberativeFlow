@@ -4,11 +4,17 @@ import math
 import os
 import yaml
 import airsim
+import subprocess
 
 from slam.slam_interface import get_current_pose
 from navigation.deliberative_nav import compute_velocity_command, compute_yaw_command
 from uav.airsim_utils import connect_and_takeoff
 from uav.interface import start_gui, exit_flag
+
+
+# Path to the AirSim Unreal executable. Can be overridden using the
+# ``UE4_PATH`` environment variable.
+UE4_EXE_PATH = os.environ.get("UE4_PATH", r"C:\Path\To\AirSim.exe")
 
 
 def _reached_goal(current: tuple, goal: tuple, threshold: float = 1.0) -> bool:
@@ -19,6 +25,14 @@ def _reached_goal(current: tuple, goal: tuple, threshold: float = 1.0) -> bool:
 
 
 def main() -> None:
+    print("\U0001f7e6 Launching Unreal simulation...")
+    ue4_proc = subprocess.Popen([UE4_EXE_PATH])
+    time.sleep(5)
+
+    print("\U0001f7e7 Starting simulated SLAM writer...")
+    slam_proc = subprocess.Popen(["python", "simulated_slam_writer.py"])
+    time.sleep(1)
+
     # launch simple GUI for stopping the simulation
     start_gui()
 
@@ -79,6 +93,8 @@ def main() -> None:
         f.write("time,x,y,z,yaw,yaw_error,yaw_rate\n")
         for entry in flight_log:
             f.write(",".join(f"{v:.3f}" for v in entry) + "\n")
+
+    slam_proc.kill()
 
 
 if __name__ == "__main__":
