@@ -1,0 +1,8 @@
+airsim
+rospy
+opencv-python
+numpy
+pandas
+matplotlib
+cv_bridge
+sensor_msgs
