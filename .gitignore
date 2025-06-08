@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+logs/
+slam/latest_pose.txt
