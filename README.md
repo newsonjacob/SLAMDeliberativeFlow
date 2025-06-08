@@ -27,3 +27,7 @@ ORB-SLAM2 will provide pose estimates that can be used by a motion planner for o
 - `scripts/orbslam2_airsim_setup.sh` – helper to set up the `orb_slam_2_ros` workspace.
 
 These scripts offer a starting point for integrating ORB-SLAM2-based navigation into an AirSim environment.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
